@@ -11,7 +11,7 @@ Este é um projeto prático e minimalista de um **Dashboard Web** que exibe rela
 * **Java 21**
 * **Spring Boot**
 * **Spring Data JPA** (Persistência de dados)
-* **H2 Database ** (Banco de dados em memória para testes rápidos)
+* **H2 Database** (Banco de dados em memória para testes rápidos)
 
 ### **Frontend**
 * **HTML5 & CSS3** (Estrutura e estilização)
