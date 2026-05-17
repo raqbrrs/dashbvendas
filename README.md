@@ -1,4 +1,5 @@
-# 📈 Dashboard de Vendas com Spring Boot & Chart.js
+# 📈 Dashboard de Vendas com Spring Boot & Chart.js 
+# Status: Trabalhando no Projeto (incompleto)
 
 Este é um projeto prático e minimalista de um **Dashboard Web** que exibe relatórios gráficos de faturamento mensal. A aplicação utiliza uma arquitetura separada, onde o **Java (Spring Boot)** atua como uma API REST fornecendo os dados e o **Frontend (HTML/JavaScript)** renderiza os gráficos de forma dinâmica.
 
