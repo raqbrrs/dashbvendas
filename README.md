@@ -18,20 +18,26 @@ Este é um projeto prático e minimalista de um **Dashboard Web** que exibe rela
 * **JavaScript (Vanilla)** (Consumo da API via Fetch)
 * **Chart.js** (Biblioteca para renderização de gráficos interativos)
 
+## Estrutura do projeto
+
+```
+dashboard-vendas/
+├── backend/          ← Projeto Spring Boot (Java)
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/dash/raquel/
+│       │   ├── DashboardVendasApplication.java  ← classe principal
+│       │   ├── controller/VendasController.java
+│       │   ├── service/VendasService.java
+│       │   ├── repository/PedidoRepository.java
+│       │   ├── model/Pedido.java
+│       │   ├── dto/DashboardDTO.java
+│       │   └── config/DataLoader.java           ← insere dados de exemplo
+│       └── resources/
+│           └── application.properties
+└── frontend/
+    └── index.html    ← abra no navegador
+```
+
 ---
 
-## 📂 Estrutura Principal de Arquivos
-
-```text
-meu-projeto-dashboard/
-├── src/
-│   ├── main/
-│   │   ├── java/com/exemplo/dashboard/
-│   │   │   ├── Venda.java               # Entidade que mapeia os dados
-│   │   │   ├── VendaRepository.java     # Comunicação com o banco de dados
-│   │   │   └── VendaController.java     # Endpoint API que disponibiliza o JSON
-│   │   └── resources/
-│   │       └── static/                  # Pasta pública do Frontend
-│   │           ├── index.html           # Interface estrutural do Dashboard
-│   │           └── app.js               # Lógica que consome a API e gera o gráfico
-└── README.md
