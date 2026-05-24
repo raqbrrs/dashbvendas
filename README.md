@@ -235,7 +235,7 @@ curl http://localhost:8080/api/pedidos
   <img src="https://skillicons.dev/icons?i=github" height="50"/>
 </a>
 
-<a href="https://linkedin.com/in/raquel">
+<a href="www.linkedin.com/in/raquel-barros-828b68334">
   <img src="https://skillicons.dev/icons?i=linkedin" height="50"/>
 </a>
 
