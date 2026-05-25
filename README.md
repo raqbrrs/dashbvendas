@@ -229,7 +229,7 @@ curl http://localhost:8080/api/pedidos
 
 <div align="center">
 
-### 👩‍💻 Desenvolvido por Raquel
+### Desenvolvido por Raquel
 
 <a href="https://github.com/raqbrrs">
   <img src="https://skillicons.dev/icons?i=github" height="50"/>
