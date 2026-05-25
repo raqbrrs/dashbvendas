@@ -29,17 +29,17 @@ Fornecer uma ferramenta intuitiva e visual para gestores acompanharem o desempen
 ## ✨ Funcionalidades
 
 ### Dashboard Principal
-- 📈 **Gráfico de Faturamento Mensal** - Visualização temporal com suavização de curvas
-- 📊 **Distribuição por Categoria** - Gráfico de rosca interativo com legendas
-- 🎯 **Métricas de Performance** - Cards com indicadores-chave de negócio
-- 📅 **Filtro por Período** - Seletor de intervalo de datas personalizado
+- **Gráfico de Faturamento Mensal** - Visualização temporal com suavização de curvas
+- **Distribuição por Categoria** - Gráfico de rosca interativo com legendas
+- **Métricas de Performance** - Cards com indicadores-chave de negócio
+- **Filtro por Período** - Seletor de intervalo de datas personalizado
 
 ### Backend (API REST)
-- ⚡ Arquitetura em camadas (Controller → Service → Repository)
-- 🔄 DTOs otimizados para redução de payload
-- 📝 Validação de dados com Bean Validation
-- 🗃️ Migrations automáticas com JPA/Hibernate
-- 🔒 Tratamento global de exceções
+- Arquitetura em camadas (Controller → Service → Repository)
+- DTOs otimizados para redução de payload
+- Validação de dados com Bean Validation
+- Migrations automáticas com JPA/Hibernate
+- Tratamento global de exceções
 
 ---
 
