@@ -217,11 +217,12 @@ curl http://localhost:8080/api/pedidos
 - [x] CRUD básico de pedidos
 - [x] Dashboard com Chart.js
 - [x] Filtro por período
-- [ ] Autenticação JWT
-- [ ] Exportação CSV/PDF
-- [ ] Testes unitários (JUnit + Mockito)
+- [x] Autenticação JWT
+- [x] Exportação CSV/PDF
+- [x] Testes unitários (JUnit + Mockito)
 - [ ] Deploy em nuvem (Railway/Heroku)
 - [ ] Comparativo ano vs ano
+- [ ] Front - End
 
 ---
 
