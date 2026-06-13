@@ -21,18 +21,4 @@ dashboard-vendas/
     └── index.html    ← abra no navegador
 ```
 
----
 
-## Passo a passo para rodar
-
-### 1. Criar o banco no MySQL
-
-Abra o MySQL Workbench ou terminal e rode:
-
-```sql
-CREATE DATABASE vendas_db;
-```
-
-### 2. Configurar a senha no backend
-
-Edite o arquivo `backend/src/main/resources/application.properties`:
