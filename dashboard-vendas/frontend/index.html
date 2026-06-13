@@ -1,0 +1,1236 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Vendas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7c6fff;
+      --accent2: #ff6f91;
+      --accent3: #6fffd4;
+      --text: #f0f0f8;
+      --muted: #7070a0;
+      --green: #4fffb0;
+      --red: #ff6b6b;
+      --amber: #ffd166;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(124,111,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -200px; right: -200px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255,111,145,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent); }
+
+    .nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(124,111,255,0.15); color: var(--accent); }
+    .nav-item .icon { font-size: 1.1rem; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .main { flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .badge-live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(79,255,176,0.1);
+      border: 1px solid rgba(79,255,176,0.2);
+      color: var(--green);
+      font-size: 0.75rem;
+      padding: 6px 12px;
+      border-radius: 99px;
+    }
+    .badge-live::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .btn-refresh {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-refresh:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    /* ── Nova Linha de Filtros ── */
+    .filters-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 1.5rem;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+    .filter-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 0.825rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      width: 100%;
+    }
+    .filter-input:focus { border-color: var(--accent); }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 1.5rem; }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .metric-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.12); }
+
+    .metric-card::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      opacity: 0.15;
+      filter: blur(20px);
+    }
+    .metric-card.c-purple::after { background: var(--accent); }
+    .metric-card.c-pink::after   { background: var(--accent2); }
+    .metric-card.c-teal::after   { background: var(--accent3); }
+    .metric-card.c-amber::after  { background: var(--amber); }
+
+    .metric-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .metric-value { font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
+    .metric-delta { font-size: 0.75rem; }
+    .delta-up   { color: var(--green); }
+    .delta-down { color: var(--red); }
+
+    /* Grid de Gráficos Ajustado */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 1fr;
+      gap: 16px;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .card-title { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 600; }
+    .card-sub { font-size: 0.75rem; color: var(--muted); }
+
+    .legend { display: flex; gap: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+    /* Estilização da lista de Top Produtos */
+    .top-products-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .product-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .product-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+    .product-name { color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+    .product-val { color: var(--muted); font-family: 'Syne', sans-serif; }
+    .progress-bar-bg {
+      background: var(--surface2);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      width: 100%;
+    }
+    .progress-bar-fill {
+      background: var(--accent);
+      height: 100%;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th {
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0 12px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    tbody td { padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+    .status-entregue  { background: rgba(79,255,176,0.1);  color: #4fffb0; border: 1px solid rgba(79,255,176,0.2); }
+    .status-entregue::before  { background: #4fffb0; }
+    .status-transito  { background: rgba(255,209,102,0.1); color: #ffd166; border: 1px solid rgba(255,209,102,0.2); }
+    .status-transito::before  { background: #ffd166; }
+    .status-processando { background: rgba(124,111,255,0.1); color: #7c6fff; border: 1px solid rgba(124,111,255,0.2); }
+    .status-processando::before { background: #7c6fff; }
+
+    .acoes-cell { display: flex; gap: 6px; }
+
+    .btn-editar {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(124,111,255,0.12);
+      border: 1px solid rgba(124,111,255,0.25);
+      color: #a99fff;
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-editar:hover { background: rgba(124,111,255,0.22); color: #c4baff; }
+
+    .btn-apagar {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.22);
+      color: #ff9999;
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-apagar:hover { background: rgba(255,107,107,0.2); color: #ffbaba; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: rgba(79,255,176,0.12); border: 1px solid rgba(79,255,176,0.25); color: #4fffb0; }
+    .toast.error   { background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.25); color: #ff9999; }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100px;
+      color: var(--muted);
+      font-size: 0.875rem;
+      gap: 10px;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: rgba(255,107,107,0.08);
+      border: 1px solid rgba(255,107,107,0.2);
+      color: #ff9999;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 480px;
+      max-width: 90vw;
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .modal-sm {
+      background: var(--surface);
+      border: 1px solid rgba(255,107,107,0.2);
+      border-radius: 16px;
+      padding: 1.75rem 2rem;
+      width: 360px;
+      max-width: 90vw;
+      transform: scale(0.95);
+      transition: transform 0.2s;
+      text-align: center;
+    }
+    .modal-overlay.open .modal-sm { transform: scale(1); }
+    .modal-sm p { font-size: 0.875rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1/-1; }
+    .form-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input, .form-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--accent); }
+    .form-select option { background: var(--surface2); }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+    .modal-footer.center { justify-content: center; }
+
+    .btn-cancel {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    .btn-save {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.85; }
+
+    .btn-danger {
+      background: rgba(255,107,107,0.15);
+      border: 1px solid rgba(255,107,107,0.3);
+      color: #ff9999;
+      padding: 10px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(255,107,107,0.25); color: #ffbaba; }
+
+    .btn-novo {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 9px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .btn-novo:hover { opacity: 0.85; }
+
+    .valor-cell { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.9rem; }
+
+    @media (max-width: 1200px) {
+      .charts-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .filters-row { grid-template-columns: 1fr 1fr; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .charts-row { grid-template-columns: 1fr; }
+      .main { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo">dashboard<span>.</span>vendas - raquel</div>
+    <nav class="nav">
+      <button class="nav-item active"><span class="icon">◈</span> Dashboard</button>
+      <button class="nav-item"><span class="icon">◫</span> Pedidos</button>
+      <button class="nav-item"><span class="icon">◉</span> Clientes</button>
+      <button class="nav-item"><span class="icon">◐</span> Produtos</button>
+      <button class="nav-item"><span class="icon">◑</span> Relatórios</button>
+    </nav>
+    <div class="sidebar-footer">
+      API: <span id="api-status" style="color:var(--muted)">verificando...</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Controle de Vendas</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:2px;" id="last-update">Carregando...</div>
+      </div>
+      <div class="topbar-right">
+        <div class="badge-live">Ao vivo</div>
+        <button class="btn-novo" onclick="abrirModalNovo()">+ Novo pedido</button>
+        <button class="btn-refresh" onclick="carregarDados()">↺ Atualizar</button>
+      </div>
+    </div>
+
+    <div class="error-box" id="error-box">
+      ⚠ Não foi possível conectar à API. Verifique se o Spring Boot está rodando em <strong>localhost:8080</strong>.
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group">
+        <label class="filter-label">Data Inicial</label>
+        <input type="date" id="filtro-data-inicio" class="filter-input" onchange="aplicarFiltros()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Data Final</label>
+        <input type="date" id="filtro-data-fim" class="filter-input" onchange="aplicarFiltros()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Categoria</label>
+        <select id="filtro-categoria" class="filter-input" onchange="aplicarFiltros()">
+          <option value="">Todas as Categorias</option>
+          <option value="Eletrônicos">Eletrônicos</option>
+          <option value="Roupas">Roupas</option>
+          <option value="Casa">Casa</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Região</label>
+        <select id="filtro-regiao" class="filter-input" onchange="aplicarFiltros()">
+          <option value="">Todas as Regiões</option>
+          <option value="NORTE">NORTE</option>
+          <option value="NORDESTE">NORDESTE</option>
+          <option value="SUL">SUL</option>
+          <option value="SUDESTE">SUDESTE</option>
+          <option value="CENTRO-OESTE">CENTRO-OESTE</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics">
+      <div class="loading"><div class="spinner"></div> Carregando...</div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Receita mensal</div>
+            <div class="card-sub">Evolução do ano atual</div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#7c6fff"></div>Receita</div>
+          </div>
+        </div>
+        <div style="position:relative;height:220px;">
+          <canvas id="lineChart" role="img" aria-label="Gráfico de receita mensal"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Por região</div>
+            <div class="card-sub">Vendas regionais</div>
+          </div>
+        </div>
+        <div style="position:relative;height:220px;">
+          <canvas id="barChart" role="img" aria-label="Gráfico de vendas por região"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Por categoria</div>
+            <div class="card-sub">Distribuição</div>
+          </div>
+        </div>
+        <div style="position:relative;height:120px;">
+          <canvas id="donutChart" role="img" aria-label="Gráfico de vendas por categoria"></canvas>
+        </div>
+        <div class="legend" id="cat-legend" style="margin-top:10px;flex-wrap:wrap;gap:6px;justify-content:center;"></div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 16px; margin-bottom: 1.5rem;" class="table-grid-layout">
+
+      <div class="chart-card" style="justify-content: flex-start; gap: 15px;">
+        <div>
+          <div class="card-title">Top 5 Produtos</div>
+          <div class="card-sub" style="margin-bottom: 5px;">Mais vendidos por valor</div>
+        </div>
+        <div class="top-products-list" id="top-produtos-container">
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Últimos pedidos</div>
+            <div class="card-sub" id="table-count">—</div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Valor</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Ações</th>
+              <th>Região</th>
+            </tr>
+            </thead>
+            <tbody id="tabela-pedidos">
+            <tr><td colspan="9"><div class="loading"><div class="spinner"></div> Carregando...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modal-novo">
+  <div class="modal">
+    <div class="modal-title">Novo Pedido</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Cliente</label>
+        <input type="text" id="f-cliente" class="form-input" placeholder="Nome do cliente">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produto</label>
+        <input type="text" id="f-produto" class="form-input" placeholder="Nome do produto">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select id="f-categoria" class="form-select">
+          <option>Eletrônicos</option>
+          <option>Roupas</option>
+          <option>Casa</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor (R$)</label>
+        <input type="number" id="f-valor" class="form-input" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="f-status" class="form-select">
+          <option>Processando</option>
+          <option>Em trânsito</option>
+          <option>Entregue</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input type="date" id="f-data" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Região</label>
+        <select id="f-regiao" class="form-select">
+          <option>NORTE</option>
+          <option>NORDESTE</option>
+          <option>SUL</option>
+          <option>SUDESTE</option>
+          <option>CENTRO-OESTE</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-novo')">Cancelar</button>
+      <button class="btn-save" onclick="salvarNovoPedido()">Salvar pedido</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <div class="modal-title">Editar Pedido</div>
+    <input type="hidden" id="e-id">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Cliente</label>
+        <input type="text" id="e-cliente" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produto</label>
+        <input type="text" id="e-produto" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select id="e-categoria" class="form-select">
+          <option>Eletrônicos</option>
+          <option>Roupas</option>
+          <option>Casa</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor (R$)</label>
+        <input type="number" id="e-valor" class="form-input" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="e-status" class="form-select">
+          <option>Processando</option>
+          <option>Em trânsito</option>
+          <option>Entregue</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input type="date" id="e-data" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Região</label>
+        <select id="e-regiao" class="form-select">
+          <option>NORTE</option>
+          <option>NORDESTE</option>
+          <option>SUL</option>
+          <option>SUDESTE</option>
+          <option>CENTRO-OESTE</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-editar')">Cancelar</button>
+      <button class="btn-save" onclick="salvarEdicao()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-excluir">
+  <div class="modal-sm">
+    <div class="modal-title">Apagar pedido?</div>
+    <p>O pedido de <strong id="excluir-nome" style="color:var(--text)"></strong> será removido permanentemente. Essa ação não pode ser desfeita.</p>
+    <input type="hidden" id="excluir-id">
+    <div class="modal-footer center">
+      <button class="btn-cancel" onclick="fecharModal('modal-excluir')">Cancelar</button>
+      <button class="btn-danger" onclick="confirmarExclusao()">Sim, apagar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8080/api';
+  const COLORS = ['#7c6fff','#ff6f91','#6fffd4','#ffd166','#ff9f43'];
+
+  let lineChart = null;
+  let donutChart = null;
+  let barChart = null;
+
+  // Armazenamento global dos dados crus vindos do Backend para aplicação de filtros locais
+  let cacheDashboard = null;
+  let cachePedidos = [];
+
+  const fmt     = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+  const fmtDate = d => new Date(d + 'T12:00:00').toLocaleDateString('pt-BR');
+
+  function statusClass(s) {
+    if (!s) return '';
+    const l = s.toLowerCase();
+    if (l.includes('entregue')) return 'status-entregue';
+    if (l.includes('tr'))       return 'status-transito';
+    return 'status-processando';
+  }
+
+  function showToast(msg, tipo = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${tipo} show`;
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function fecharModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target === el) el.classList.remove('open');
+    });
+  });
+
+  async function carregarDados() {
+    document.getElementById('error-box').style.display = 'none';
+    try {
+      const [dash, pedidos] = await Promise.all([
+        fetch(`${API}/dashboard`).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+        fetch(`${API}/pedidos`).then(r => r.json())
+      ]);
+
+      document.getElementById('api-status').textContent = '🟢 online';
+      document.getElementById('api-status').style.color = '#4fffb0';
+      document.getElementById('last-update').textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
+
+      // Alimentação de cache global
+      cacheDashboard = dash;
+      cachePedidos = pedidos;
+
+      // Executa lógica estrutural de filtros e montagem de tela
+      aplicarFiltros();
+
+    } catch(e) {
+      document.getElementById('api-status').textContent = '🔴 offline';
+      document.getElementById('api-status').style.color = '#ff6b6b';
+      document.getElementById('error-box').style.display = 'block';
+      document.getElementById('last-update').textContent = 'Erro ao conectar';
+    }
+  }
+
+  // Função centralizadora de regras de negócio de filtragem em frontend
+  function aplicarFiltros() {
+    if (!cacheDashboard || !cachePedidos) return;
+
+    const dataInicio = document.getElementById('filtro-data-inicio').value;
+    const dataFim = document.getElementById('filtro-data-fim').value;
+    const filtroCat = document.getElementById('filtro-categoria').value;
+    const filtroReg = document.getElementById('filtro-regiao').value;
+
+    // Filtragem iterativa sobre a lista mestre de pedidos
+    let pedidosFiltrados = cachePedidos.filter(p => {
+      if (dataInicio && p.data < dataInicio) return false;
+      if (dataFim && p.data > dataFim) return false;
+      if (filtroCat && p.categoria !== filtroCat) return false;
+      if (filtroReg && p.regiao !== filtroReg) return false;
+      return true;
+    });
+
+    // Recálculo dinâmico de indicadores financeiros e volumetria baseado nos itens filtrados
+    let receitaTotal = 0;
+    let totalPedidos = pedidosFiltrados.length;
+    let clientesSet = new Set();
+    let categoriasAgrupadas = {};
+    let regioesAgrupadas = {};
+    let produtosAgrupados = {};
+
+    pedidosFiltrados.forEach(p => {
+      receitaTotal += p.valor;
+      if(p.cliente) clientesSet.add(p.cliente);
+
+      // Agrupador de distribuição por Categorias
+      categoriasAgrupadas[p.categoria] = (categoriasAgrupadas[p.categoria] || 0) + 1;
+
+      // Agrupador de distribuição por Regiões
+      let reg = p.regiao || 'Desconhecido';
+      regioesAgrupadas[reg] = (regioesAgrupadas[reg] || 0) + 1;
+
+      // Agrupador volumétrico e financeiro por Produto (Top Produtos)
+      produtosAgrupados[p.produto] = (produtosAgrupados[p.produto] || 0) + p.valor;
+    });
+
+    let ticketMedio = totalPedidos > 0 ? (receitaTotal / totalPedidos) : 0;
+    let totalClientes = clientesSet.size;
+
+    // Renderizadores estruturais atualizados com a massa de dados calculada localmente
+    renderMetricsLocal(receitaTotal, totalPedidos, ticketMedio, totalClientes);
+    renderDonutChart(categoriasAgrupadas);
+    renderBarChart(regioesAgrupadas);
+    renderTopProdutos(produtosAgrupados);
+    renderTabela(pedidosFiltrados);
+
+    // Gráfico de linha temporal permanece intocado em relação à sua estrutura original
+    renderLineChart(cacheDashboard.receitaPorMes);
+  }
+
+  function renderMetricsLocal(receita, pedidos, ticket, clientes) {
+    document.getElementById('metrics').innerHTML = `
+      <div class="metric-card c-purple">
+        <div class="metric-label">Receita total</div>
+        <div class="metric-value">${fmt(receita)}</div>
+        <div class="metric-delta delta-up">↑ 12% vs mês anterior</div>
+      </div>
+      <div class="metric-card c-pink">
+        <div class="metric-label">Total de pedidos</div>
+        <div class="metric-value">${Number(pedidos).toLocaleString('pt-BR')}</div>
+        <div class="metric-delta delta-up">↑ 8% vs mês anterior</div>
+      </div>
+      <div class="metric-card c-teal">
+        <div class="metric-label">Ticket médio</div>
+        <div class="metric-value">${fmt(ticket)}</div>
+        <div class="metric-delta delta-down">↓ 3% vs mês anterior</div>
+      </div>
+      <div class="metric-card c-amber">
+        <div class="metric-label">Clientes ativos</div>
+        <div class="metric-value">${Number(clientes).toLocaleString('pt-BR')}</div>
+        <div class="metric-delta delta-up">↑ 21% vs mês anterior</div>
+      </div>
+    ;
+  }
+
+  function renderBarChart(data) {
+    const labels = Object.keys(data);
+    const values = Object.values(data).map(Number);
+    const ctx = document.getElementById('barChart').getContext('2d');
+
+    if (barChart) barChart.destroy();
+
+    barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Vendas',
+                data: values,
+                backgroundColor: '#7c6fff',
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7070a0' } },
+                y: { grid: { display: false }, ticks: { color: '#7070a0' } }
+            }
+        }
+    });
+  }
+
+  function renderLineChart(data) {
+    const labels = Object.keys(data);
+    const values = Object.values(data).map(Number);
+    const ctx = document.getElementById('lineChart').getContext('2d');
+    if (lineChart) lineChart.destroy();
+    lineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Receita',
+          data: values,
+          borderColor: '#7c6fff',
+          backgroundColor: 'rgba(124,111,255,0.1)',
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#7c6fff',
+          borderWidth: 2,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            ticks: { color: '#7070a0', font: { size: 11 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            border: { display: false }
+          },
+          x: {
+            ticks: { color: '#7070a0', font: { size: 11 } },
+            grid: { display: false },
+            border: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  function renderDonutChart(data) {
+    const labels = Object.keys(data);
+    const values = Object.values(data).map(Number);
+    const ctx = document.getElementById('donutChart').getContext('2d');
+    if (donutChart) donutChart.destroy();
+
+    if(labels.length === 0) {
+      document.getElementById('cat-legend').innerHTML = '<div style="font-size:0.75rem;color:var(--muted)">Sem dados</div>';
+      return;
+    }
+
+    donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: COLORS.slice(0, labels.length),
+          borderWidth: 0,
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    document.getElementById('cat-legend').innerHTML = labels.map((l, i) => `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${COLORS[i]}"></div>
+        ${l} (${values[i]})
+      </div>
+    `).join('');
+  }
+
+  function renderTopProdutos(produtos) {
+    const container = document.getElementById('top-produtos-container');
+
+    const listaOrdenada = Object.keys(produtos).map(nome => {
+      return { nome, total: produtos[nome] };
+    }).sort((a, b) => b.total - a.total).slice(0, 5);
+
+    if (listaOrdenada.length === 0) {
+      container.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);text-align:center;padding:1rem;">Nenhum produto</div>';
+      return;
+    }
+
+    const valorMaximo = listaOrdenada[0].total;
+
+    container.innerHTML = listaOrdenada.map(p => {
+      const percentual = valorMaximo > 0 ? (p.total / valorMaximo) * 100 : 0;
+      return `
+        <div class="product-row">
+          <div class="product-info">
+            <span class="product-name" title="${p.nome}">${p.nome}</span>
+            <span class="product-val">${fmt(p.total)}</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${percentual}%"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderTabela(pedidos) {
+    document.getElementById('table-count').textContent =
+      `${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''} registrado${pedidos.length !== 1 ? 's' : ''}`;
+
+    const tb = document.getElementById('tabela-pedidos');
+    if (!pedidos.length) {
+      tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem;">Nenhum pedido encontrado</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = pedidos.slice().reverse().slice(0, 20).map(p => `
+      <tr>
+        <td style="color:var(--muted);font-size:0.8rem;">#${p.id}</td>
+        <td>${p.cliente}</td>
+        <td>${p.produto}</td>
+        <td><span style="color:var(--muted);font-size:0.82rem;">${p.categoria}</span></td>
+        <td class="valor-cell">${fmt(p.valor)}</td>
+        <td style="color:var(--muted);font-size:0.82rem;">${fmtDate(p.data)}</td>
+        <td><span class="status-badge ${statusClass(p.status)}">${p.status}</span></td>
+        <td>
+          <div class="acoes-cell">
+            <button class="btn-editar" onclick='abrirEditar(${JSON.stringify(p)})'>✏ Editar</button>
+            <button class="btn-apagar" onclick="abrirExcluir(${p.id}, '${p.cliente}')">✕ Apagar</button>
+          </div>
+        </td>
+        <td style="color:var(--muted);font-size:0.82rem; font-weight: 500;">${p.regiao || 'Desconhecido'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function abrirModalNovo() {
+    document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+    document.getElementById('modal-novo').classList.add('open');
+  }
+
+  async function salvarNovoPedido() {
+    const pedido = {
+      cliente:   document.getElementById('f-cliente').value.trim(),
+      produto:   document.getElementById('f-produto').value.trim(),
+      categoria: document.getElementById('f-categoria').value,
+      valor:     parseFloat(document.getElementById('f-valor').value) || 0,
+      status:    document.getElementById('f-status').value,
+      data:      document.getElementById('f-data').value,
+      regiao:    document.getElementById('f-regiao').value,
+    };
+    if (!pedido.cliente || !pedido.produto) {
+      showToast('Preencha ao menos cliente e produto.', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedido)
+      });
+      if (!res.ok) throw new Error();
+      fecharModal('modal-novo');
+      showToast('Pedido criado com sucesso!');
+      carregarDados();
+    } catch(e) {
+      showToast('Erro ao salvar. Verifique a API.', 'error');
+    }
+  }
+
+  function abrirEditar(p) {
+    document.getElementById('e-id').value       = p.id;
+    document.getElementById('e-cliente').value  = p.cliente;
+    document.getElementById('e-produto').value  = p.produto;
+    document.getElementById('e-categoria').value = p.categoria;
+    document.getElementById('e-valor').value    = p.valor;
+    document.getElementById('e-status').value   = p.status;
+    document.getElementById('e-data').value     = p.data;
+
+
+    if(document.getElementById('e-regiao')) {
+      document.getElementById('e-regiao').value = p.regiao || 'SUDESTE';
+    }
+
+    document.getElementById('modal-editar').classList.add('open');
+  }
+
+  async function salvarEdicao() {
+    const id = document.getElementById('e-id').value;
+    const pedido = {
+      cliente:   document.getElementById('e-cliente').value.trim(),
+      produto:   document.getElementById('e-produto').value.trim(),
+      categoria: document.getElementById('e-categoria').value,
+      valor:     parseFloat(document.getElementById('e-valor').value) || 0,
+      status:    document.getElementById('e-status').value,
+      data:      document.getElementById('e-data').value,
+      regiao:    document.getElementById('e-regiao') ? document.getElementById('e-regiao').value : 'SUDESTE'
+    };
+    if (!pedido.cliente || !pedido.produto) {
+      showToast('Preencha ao menos cliente e produto.', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/pedidos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedido)
+      });
+      if (!res.ok) throw new Error();
+      fecharModal('modal-editar');
+      showToast('Pedido atualizado!');
+      carregarDados();
+    } catch(e) {
+      showToast('Erro ao atualizar. Verifique a API.', 'error');
+    }
+  }
+
+  function abrirExcluir(id, cliente) {
+    document.getElementById('excluir-id').value    = id;
+    document.getElementById('excluir-nome').textContent = cliente;
+    document.getElementById('modal-excluir').classList.add('open');
+  }
+
+  async function confirmarExclusao() {
+    const id = document.getElementById('excluir-id').value;
+    try {
+      const res = await fetch(`${API}/pedidos/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      fecharModal('modal-excluir');
+      showToast('Pedido apagado.');
+      carregarDados();
+    } catch(e) {
+      showToast('Erro ao apagar. Verifique a API.', 'error');
+    }
+  }
+
+
+  carregarDados();
+  setInterval(carregarDados, 60000);
+</script>
+</body>
+</html>
+

@@ -1,0 +1,31 @@
+package com.dash.raquel.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.antlr.v4.runtime.misc.NotNull;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Data
+@Entity
+@Table(name = "pedidos")
+public class Pedido {
+
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String cliente;
+    private String produto;
+    private String categoria;
+    private String regiao;
+
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal valor;
+
+    private String status;
+    private LocalDate data;
+}
