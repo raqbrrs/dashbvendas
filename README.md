@@ -220,8 +220,8 @@ curl http://localhost:8080/api/pedidos
 - [x] Autenticação JWT
 - [x] Exportação CSV/PDF
 - [x] Testes unitários (JUnit + Mockito)
-- [ ] Deploy em nuvem (Railway/Heroku)
-- [ ] Comparativo ano vs ano
+- [x] Deploy em nuvem (Railway/Heroku)
+- [x] Comparativo ano vs ano
 - [ ] Front - End
 
 ---
